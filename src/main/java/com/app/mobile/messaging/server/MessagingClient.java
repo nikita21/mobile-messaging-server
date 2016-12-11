@@ -1,5 +1,6 @@
 package com.app.mobile.messaging.server;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -7,17 +8,18 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Properties;
 
+import com.app.mobile.messaging.server.entity.ClientRequestObject;
 import com.app.mobile.messaging.server.utils.PropertyReaderUtils;
 
 public class MessagingClient implements Runnable
 {
     private int port;
-    private int originId;
-    private int destinationId;
+    private String originId;
+    private String destinationId;
     private String message;
     private String serverAddress;
 
-    public MessagingClient(int port, int originId, int destinationId, String message) {
+    public MessagingClient(int port, String originId, String destinationId, String message) {
 	this.port = port;
 	this.originId = originId;
 	this.destinationId = destinationId;
@@ -47,28 +49,25 @@ public class MessagingClient implements Runnable
 	{
 	    e.printStackTrace();
 	}
-	finally
-	{
-	    try
-	    {
-		socket.close();
-	    }
-	    catch (IOException e)
-	    {
-		e.printStackTrace();
-	    }
-	}
     }
     
     private void connectToServer(Socket socket) throws UnknownHostException, IOException, ClassNotFoundException
     {
 	ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-	oos.writeObject(message + originId);
+	ClientRequestObject requestObject = new ClientRequestObject(originId, destinationId, message);
+	oos.writeObject(requestObject);
 	
 	//receive response message sent by the server
 	ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-	String responseMessage = (String) ois.readObject();
-	System.out.println("Reponse: " + responseMessage);
+	try
+	{
+	    String responseMessage = (String) ois.readObject();
+	    System.out.println(responseMessage);
+	}
+	catch(EOFException e)
+	{
+	    System.out.println("No message to be read!!!!!!!!!!!1");
+	}
 	
 	ois.close();
 	oos.close();
