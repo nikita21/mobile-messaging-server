@@ -1,8 +1,9 @@
 package com.app.mobile.messaging.server;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -13,7 +14,6 @@ import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import com.app.mobile.messaging.server.entity.ClientRequestObject;
 import com.app.mobile.messaging.server.entity.ClientResponseObject;
 import com.app.mobile.messaging.server.utils.ExecutorUtils;
 
@@ -67,72 +67,71 @@ public class MessagingServer
 	{
 	    try
 	    {
-		System.out.println("starttttttttttttttt");
-		ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-		ClientRequestObject requestObj = (ClientRequestObject) ois.readObject();
-		System.out.println(requestObj);
-		String originId = requestObj.getOriginId();
-		String destinationId = requestObj.getDestinationId();
-		String requestMessage = requestObj.getMessage();
-		if (requestMessage.equalsIgnoreCase("EXIT"))
+		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+		while (true)
 		{
-		    socket.close();
-		    isServerRunning = false;
-		}
-		else
-		{
-		    String message = originId + " : " + requestMessage;
-		    for(Map.Entry<String, ClientResponseObject> entry : identificationMap.entrySet())
+		    String[] requestObj = in.readLine().split(",");
+		    String originId = requestObj[0];
+		    String destinationId = requestObj[1];
+		    String requestMessage = requestObj[2];
+		    if (requestMessage.equalsIgnoreCase("EXIT"))
 		    {
-			System.out.println(entry.getKey() + " " + entry.getValue());
-		    }
-		    ClientResponseObject responseObj = identificationMap.get(originId);
-		    if (null == responseObj)
-		    {
-			identificationMap.put(originId, new ClientResponseObject(socket, null));
+			socket.close();
+			isServerRunning = false;
 		    }
 		    else
 		    {
-			responseObj.setSocket(socket);
-			List<String> originMessages = responseObj.getMessages();
-			if (originMessages != null && !originMessages.isEmpty())
+			String message = originId + " : " + requestMessage;
+			ClientResponseObject responseObj = identificationMap.get(originId);
+			if (null == responseObj)
 			{
-			    writeToOutputStream(socket, originMessages);
+			    identificationMap.put(originId, new ClientResponseObject(socket, null));
 			}
-		    }
+			else
+			{
+			    responseObj.setSocket(socket);
+			    List<String> originMessages = responseObj.getMessages();
+			    if (originMessages != null && !originMessages.isEmpty())
+			    {
+				writeToOutputStream(socket, originMessages);
+			    }
+			}
 
-		    /* fetch destination device object from the map and save the message to the list */
-		    ClientResponseObject destResponseObj = identificationMap.get(destinationId);
-		    if (null == destResponseObj)
-		    {
-			List<String> messages = new ArrayList<String>();
-			messages.add(message);
-			destResponseObj = new ClientResponseObject(null, messages);
-			identificationMap.put(destinationId, destResponseObj);
-		    }
-		    else
-		    {
-			Socket destSocket = destResponseObj.getSocket();
-			List<String> destMessages = destResponseObj.getMessages();
-			if (null == destSocket)
+			/* fetch destination device object from the map and save the message to the list */
+			ClientResponseObject destResponseObj = identificationMap.get(destinationId);
+			if (null == destResponseObj)
 			{
-			    destMessages.add(message);
+			    List<String> messages = new ArrayList<String>();
+			    messages.add(message);
+			    destResponseObj = new ClientResponseObject(null, messages);
+			    identificationMap.put(destinationId, destResponseObj);
+			    for (Map.Entry<String, ClientResponseObject> entry : identificationMap.entrySet())
+			    {
+				System.out.println(entry.getKey() + " " + entry.getValue());
+			    }
 			}
-			else if(null != destMessages)
+			else
 			{
-			    destMessages.add(message);
-			    writeToOutputStream(destSocket, destMessages);
+			    Socket destSocket = destResponseObj.getSocket();
+			    List<String> destMessages = destResponseObj.getMessages();
+			    if (destSocket != null)
+			    {
+				if (null == destMessages)
+				{
+				    destMessages = new ArrayList<String>();
+				}
+				destMessages.add(message);
+				writeToOutputStream(destSocket, destMessages);
+			    }
+			    else
+			    {
+				destMessages.add(message);
+			    }
 			}
 		    }
-
 		}
-		ois.close();
 	    }
 	    catch (IOException e)
-	    {
-		e.printStackTrace();
-	    }
-	    catch (ClassNotFoundException e)
 	    {
 		e.printStackTrace();
 	    }
@@ -142,15 +141,14 @@ public class MessagingServer
 
     private void writeToOutputStream(Socket socket, List<String> listOfMessages) throws IOException
     {
-	ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+	PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 	Iterator<String> iterator = listOfMessages.iterator();
 	while (iterator.hasNext())
 	{
 	    String str = iterator.next();
-	    oos.writeObject(str);
+	    out.println(str);
+	    out.flush();
 	    iterator.remove();
 	}
-	oos.flush();
-	oos.close();
     }
 }

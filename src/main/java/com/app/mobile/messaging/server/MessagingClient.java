@@ -3,13 +3,11 @@ package com.app.mobile.messaging.server;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Properties;
 
-import com.app.mobile.messaging.server.entity.ClientRequestObject;
 import com.app.mobile.messaging.server.utils.PropertyReaderUtils;
 
 public class MessagingClient implements Runnable
@@ -55,31 +53,28 @@ public class MessagingClient implements Runnable
 	BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
 	
 	//write input taken from stdIn to the output stream of the socket
-	ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
+	PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 	
 	//receive response message sent by other clients to the server
-	ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+	BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 	String responseMessage;
-	String[] inputMessage;
+	String inputMessage;
 	while(true)
 	{
-	    inputMessage = stdIn.readLine().split(",", 2);
-	    System.out.println(inputMessage);
+	    System.out.println("Enter message to be send in the format {destinationId,message} : ");
+	    inputMessage = stdIn.readLine();
 	    if(inputMessage != null)
 	    {
-		String destinationId = inputMessage[0];
-		String message = inputMessage[1];
-		ClientRequestObject requestObject = new ClientRequestObject(originId, destinationId, message);
-		oos.writeObject(requestObject);
-		oos.flush();
+		String requestObject = originId+","+inputMessage;
+		out.println(requestObject);
+		out.flush();
 	    }
-	    responseMessage = (String) ois.readObject();
+	    responseMessage = in.readLine();
 	    if(responseMessage != null)
 	    {
 		System.out.println(responseMessage);
 	    }
 	}
-	//oos.close();
     }
 
 }
