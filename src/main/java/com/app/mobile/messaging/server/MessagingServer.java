@@ -67,8 +67,10 @@ public class MessagingServer
 	{
 	    try
 	    {
+		System.out.println("starttttttttttttttt");
 		ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
 		ClientRequestObject requestObj = (ClientRequestObject) ois.readObject();
+		System.out.println(requestObj);
 		String originId = requestObj.getOriginId();
 		String destinationId = requestObj.getDestinationId();
 		String requestMessage = requestObj.getMessage();
@@ -80,6 +82,10 @@ public class MessagingServer
 		else
 		{
 		    String message = originId + " : " + requestMessage;
+		    for(Map.Entry<String, ClientResponseObject> entry : identificationMap.entrySet())
+		    {
+			System.out.println(entry.getKey() + " " + entry.getValue());
+		    }
 		    ClientResponseObject responseObj = identificationMap.get(originId);
 		    if (null == responseObj)
 		    {
@@ -144,6 +150,7 @@ public class MessagingServer
 	    oos.writeObject(str);
 	    iterator.remove();
 	}
+	oos.flush();
 	oos.close();
     }
 }
