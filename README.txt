@@ -9,7 +9,7 @@ ClientResponseObject contains socket details[host and port of id] and list of me
 
 When the client comes online, i.e., made a persistent socket connection to server, all the messages stored in the list will be send to the client.
 
-Created a maven project. For compilation, execute command "mvn clean install". It'll create a jar in the target folder.
+Created a maven project. For compilation, execute command "mvn clean install". It'll create a jar in the target folder. jar contains all the dependencies, so no need to download any dependency.
 After creating the jar, run the server followed by number of clients to be executed.
 java -cp path-to-jar com.app.mobile.messaging.server.Main (for executing server)
 java -cp path-to-jar com.app.mobile.messaging.server.ClientApp "clientId1"
