@@ -58,9 +58,10 @@ public class MessagingClient implements Runnable
 	oos.writeObject(requestObject);
 	
 	//receive response message sent by the server
-	ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+	ObjectInputStream ois = null;
 	try
 	{
+	    ois = new ObjectInputStream(socket.getInputStream());
 	    String responseMessage = (String) ois.readObject();
 	    System.out.println(responseMessage);
 	}
@@ -68,10 +69,14 @@ public class MessagingClient implements Runnable
 	{
 	    System.out.println("No message to be read!!!!!!!!!!!1");
 	}
-	
-	ois.close();
-	oos.close();
-	
+	finally
+	{
+	    if(ois != null)
+	    {
+		ois.close();
+	    }
+	    oos.close();
+	}
     }
 
 }

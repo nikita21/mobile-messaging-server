@@ -5,25 +5,13 @@ import java.util.List;
 
 public class ClientResponseObject
 {
-    private String destinationId;
     private Socket socket;
     private List<String> messages;
     
-    public ClientResponseObject(String destinationId, Socket socket, List<String> messages)
+    public ClientResponseObject(Socket socket, List<String> messages)
     {
-	this.destinationId = destinationId;
 	this.socket = socket;
 	this.messages = messages;
-    }
-
-    public String getDestinationId()
-    {
-        return destinationId;
-    }
-
-    public void setDestinationId(String destinationId)
-    {
-        this.destinationId = destinationId;
     }
 
     public Socket getSocket()
@@ -49,7 +37,7 @@ public class ClientResponseObject
     @Override
     public String toString()
     {
-	return "ClientResponseObject [destinationId=" + destinationId + ", socket=" + socket + ", messages=" + messages + "]";
+	return "ClientResponseObject [socket=" + socket + ", messages=" + messages + "]";
     }
 
 }
